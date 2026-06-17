@@ -655,13 +655,35 @@ document.getElementById('addDealBtn').addEventListener('click', () => {
   renderDeals();
 });
 
-document.getElementById('saveScriptUrlBtn').addEventListener('click', () => {
+document.getElementById('saveScriptUrlBtn').addEventListener('click', async () => {
   const val = document.getElementById('scriptUrlInput').value.trim();
+
   if (!val) return;
-  localStorage.setItem('team-priorities-script-url', val);
-  SCRIPT_URL = val;
-  document.getElementById('setupBanner').style.display = 'none';
-  loadData();
+
+  try {
+    const res = await fetch(val + '?action=getAll');
+
+    if (!res.ok) {
+      throw new Error('Invalid Apps Script URL');
+    }
+
+    await res.json();
+
+    localStorage.setItem('team-priorities-script-url', val);
+    SCRIPT_URL = val;
+
+    document.getElementById('setupBanner').style.display = 'none';
+
+    loadData();
+
+  } catch (err) {
+    alert(
+      'Could not connect to that Google Sheet URL. Please check the Apps Script deployment and try again.'
+    );
+
+    document.getElementById('setupBanner').style.display = 'block';
+    document.getElementById('scriptUrlInput').focus();
+  }
 });
 
 loadData();
