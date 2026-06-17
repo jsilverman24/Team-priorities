@@ -170,8 +170,18 @@
   button:active { transform: scale(0.98); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   button.icon-btn {
-    width: 34px; padding: 0; justify-content: center; flex-shrink: 0;
-  }
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 11px;
+  justify-content: center;
+  flex-shrink: 0;
+}
+  .priority-row input[type=text] {
+  flex: 1;
+  min-width: 0;
+}
   button.danger { color: var(--red); border-color: var(--red); }
 
   .toolbar {
@@ -319,6 +329,19 @@
         <option>Blocked</option>
         <option>Closed</option>
       </select>
+      <select id="categoryFilter">
+  <option value="All">All Categories</option>
+  ${CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+</select>
+      <select id="categoryFilter">
+  <option>All Categories</option>
+  <option>Marketplace</option>
+  <option>Wholesale Market</option>
+  <option>Enterprise</option>
+  <option>Strategic</option>
+  <option>SMB</option>
+  <option>Partner</option>
+</select>
       <select id="sortBy">
         <option value="date_desc">Newest first</option>
         <option value="date_asc">Oldest first</option>
@@ -368,6 +391,7 @@ let deals = [];
 let search = '';
 let stageFilter = 'All';
 let sortBy = 'date_desc';
+let categoryFilter = 'All Categories';
 let expanded = null;
 let saveTimer = null;
 
@@ -491,8 +515,14 @@ function filteredDeals() {
   let list = deals.filter(d => {
     const q = search.toLowerCase();
     const matchesSearch = !q || d.name.toLowerCase().includes(q) || d.owner.toLowerCase().includes(q) || d.update.toLowerCase().includes(q);
-    const matchesStage = stageFilter === 'All' || d.stage === stageFilter;
-    return matchesSearch && matchesStage;
+    const matchesStage =
+  stageFilter === 'All' || d.stage === stageFilter;
+
+const matchesCategory =
+  categoryFilter === 'All Categories' ||
+  d.category === categoryFilter;
+
+return matchesSearch && matchesStage && matchesCategory;
   });
   list = list.slice().sort((a,b) => {
     if (sortBy === 'date_desc') return new Date(b.date) - new Date(a.date);
@@ -780,6 +810,11 @@ function renderDeals() {
 
 document.getElementById('search').addEventListener('input', e => { search = e.target.value; renderDeals(); });
 document.getElementById('stageFilter').addEventListener('change', e => { stageFilter = e.target.value; renderDeals(); });
+  document.getElementById('categoryFilter')
+  .addEventListener('change', e => {
+    categoryFilter = e.target.value;
+    renderDeals();
+  });
 document.getElementById('sortBy').addEventListener('change', e => { sortBy = e.target.value; renderDeals(); });
 document.getElementById('exportBtn').addEventListener('click', exportMarkdown);
 document.getElementById('addDealBtn').addEventListener('click', () => {
