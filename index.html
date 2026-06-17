@@ -388,7 +388,7 @@ async function loadData() {
     if (local) {
       const data = JSON.parse(local);
       priorities = data.priorities || {};
-      deals = data.deals || [];
+      deals = (data.deals || []).map(normalizeDeal);
     }
     setSyncStatus('error', 'Local only (no Sheet connected)');
     seedDefaults();
@@ -410,7 +410,7 @@ async function loadData() {
     if (local) {
       const data = JSON.parse(local);
       priorities = data.priorities || {};
-      deals = data.deals || [];
+      deals = (data.deals || []).map(normalizeDeal);
     }
   }
   seedDefaults();
