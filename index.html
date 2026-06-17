@@ -343,7 +343,16 @@
 const DEFAULT_SCRIPT_URL = '';
 let SCRIPT_URL = localStorage.getItem('team-priorities-script-url') || DEFAULT_SCRIPT_URL;
 
-const TEAM = ['Kate', 'Dave', 'Abby', 'Ben'];
+const TEAM = ['Kate', 'Dave', 'Abby', 'Ben', 'Jacob'];
+
+const CATEGORIES = [
+  'Marketplace',
+  'Wholesale Market',
+  'Enterprise',
+  'Strategic',
+  'SMB',
+  'Partner'
+];
 const STAGES = ['On track', 'At risk', 'Blocked', 'Closed'];
 const STAGE_CLASS = {
   'On track': 'on-track',
@@ -413,6 +422,7 @@ function normalizeDeal(d) {
     id: d.id || ('d' + Date.now() + Math.random().toString(36).slice(2)),
     name: d.name || '',
     owner: d.owner || TEAM[0],
+    category: d.category || 'Marketplace',
     stage: d.stage || 'On track',
     update: d.update || '',
     next: d.next || '',
@@ -423,10 +433,28 @@ function normalizeDeal(d) {
 function seedDefaults() {
   TEAM.forEach(m => { if (!priorities[m]) priorities[m] = []; });
   if (deals.length === 0) {
-    deals = [
-      { id: 'd1', name: 'Acme Corp renewal', owner: 'Kate', stage: 'On track', update: 'Contract redline sent, awaiting legal sign-off.', next: 'Follow up with legal by Thursday', date: '2026-06-12' },
-      { id: 'd2', name: 'Northwind expansion', owner: 'Dave', stage: 'At risk', update: 'Champion went quiet after pricing call.', next: 'Re-engage champion, loop in VP sponsor', date: '2026-06-10' }
-    ];
+   deals = [
+  {
+    id: 'd1',
+    name: 'Acme Corp renewal',
+    owner: 'Kate',
+    category: 'Marketplace',
+    stage: 'On track',
+    update: 'Contract redline sent, awaiting legal sign-off.',
+    next: 'Follow up with legal by Thursday',
+    date: '2026-06-12'
+  },
+  {
+    id: 'd2',
+    name: 'Northwind expansion',
+    owner: 'Dave',
+    category: 'Wholesale Market',
+    stage: 'At risk',
+    update: 'Champion went quiet after pricing call.',
+    next: 'Re-engage champion, loop in VP sponsor',
+    date: '2026-06-10'
+  }
+];
   }
 }
 
@@ -513,39 +541,127 @@ function render() {
 
 function renderPriorities() {
   const grid = document.getElementById('prioritiesGrid');
+
   grid.innerHTML = TEAM.map(member => {
     const items = priorities[member] || [];
+
     const rows = items.map((item, idx) => `
       <div class="priority-row">
-        <span class="num">${idx+1}.</span>
-        <input type="text" value="${esc(item)}" data-member="${esc(member)}" data-idx="${idx}" class="priority-input" />
-        <button class="icon-btn priority-remove" data-member="${esc(member)}" data-idx="${idx}" aria-label="Remove priority"><i class="ti ti-x" aria-hidden="true"></i></button>
-      </div>`).join('');
+        <span class="num">${idx + 1}.</span>
+
+        <button
+          class="icon-btn priority-up"
+          data-member="${esc(member)}"
+          data-idx="${idx}"
+          title="Move up">
+          ↑
+        </button>
+
+        <button
+          class="icon-btn priority-down"
+          data-member="${esc(member)}"
+          data-idx="${idx}"
+          title="Move down">
+          ↓
+        </button>
+
+        <input
+          type="text"
+          value="${esc(item)}"
+          data-member="${esc(member)}"
+          data-idx="${idx}"
+          class="priority-input" />
+
+        <button
+          class="icon-btn priority-remove"
+          data-member="${esc(member)}"
+          data-idx="${idx}"
+          title="Delete">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+    `).join('');
+
     return `
       <div class="priority-card">
         <p class="name">${esc(member)}</p>
+
         ${rows}
-        <button class="priority-add" data-member="${esc(member)}" style="width:100%; margin-top:4px; justify-content:center;"><i class="ti ti-plus" aria-hidden="true"></i>Add priority</button>
-      </div>`;
+
+        <button
+          class="priority-add"
+          data-member="${esc(member)}"
+          style="width:100%; margin-top:4px; justify-content:center;">
+          <i class="ti ti-plus"></i>
+          Add priority
+        </button>
+      </div>
+    `;
   }).join('');
 
   grid.querySelectorAll('.priority-input').forEach(inp => {
     inp.addEventListener('input', e => {
-      priorities[e.target.dataset.member][Number(e.target.dataset.idx)] = e.target.value;
+      priorities[e.target.dataset.member][Number(e.target.dataset.idx)] =
+        e.target.value;
       queueSave();
     });
   });
+
   grid.querySelectorAll('.priority-remove').forEach(btn => {
-    btn.addEventListener('click', e => {
+    btn.addEventListener('click', () => {
       const member = btn.dataset.member;
+
       priorities[member].splice(Number(btn.dataset.idx), 1);
+
       queueSave();
       renderPriorities();
     });
   });
+
   grid.querySelectorAll('.priority-add').forEach(btn => {
     btn.addEventListener('click', () => {
       priorities[btn.dataset.member].push('New priority');
+
+      queueSave();
+      renderPriorities();
+    });
+  });
+
+  grid.querySelectorAll('.priority-up').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const member = btn.dataset.member;
+      const idx = Number(btn.dataset.idx);
+
+      if (idx === 0) return;
+
+      [
+        priorities[member][idx - 1],
+        priorities[member][idx]
+      ] = [
+        priorities[member][idx],
+        priorities[member][idx - 1]
+      ];
+
+      queueSave();
+      renderPriorities();
+    });
+  });
+
+  grid.querySelectorAll('.priority-down').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const member = btn.dataset.member;
+      const idx = Number(btn.dataset.idx);
+
+      if (idx >= priorities[member].length - 1) return;
+
+      [
+        priorities[member][idx + 1],
+        priorities[member][idx]
+      ] = [
+        priorities[member][idx],
+        priorities[member][idx + 1]
+      ];
+
       queueSave();
       renderPriorities();
     });
@@ -583,6 +699,21 @@ function renderDeals() {
               </select>
             </div>
             <div>
+  <label>Category</label>
+  <select
+    data-field="category"
+    data-id="${d.id}"
+    class="deal-field deal-select">
+
+    ${CATEGORIES.map(c => `
+      <option ${d.category===c?'selected':''}>
+        ${esc(c)}
+      </option>
+    `).join('')}
+
+  </select>
+</div>
+            <div>
               <label>Status</label>
               <select data-field="stage" data-id="${d.id}" class="deal-field deal-select">
                 ${STAGES.map(s => `<option ${d.stage===s?'selected':''}>${esc(s)}</option>`).join('')}
@@ -607,7 +738,9 @@ function renderDeals() {
           <div class="deal-header-left">
             <i class="ti ti-chevron-down chev" aria-hidden="true"></i>
             <span class="deal-name">${esc(d.name)}</span>
-            <span class="deal-owner">${esc(d.owner)}</span>
+            <span class="deal-owner">
+  ${esc(d.owner)} • ${esc(d.category)}
+</span>
             ${stale ? `<span class="badge stale"><i class="ti ti-clock" aria-hidden="true"></i>Stale</span>` : ''}
           </div>
           <div class="deal-header-right">
@@ -651,7 +784,12 @@ document.getElementById('sortBy').addEventListener('change', e => { sortBy = e.t
 document.getElementById('exportBtn').addEventListener('click', exportMarkdown);
 document.getElementById('addDealBtn').addEventListener('click', () => {
   const id = 'd' + Date.now();
-  deals.push({ id, name: 'New deal', owner: TEAM[0], stage: 'On track', update: '', next: '', date: new Date().toISOString().slice(0,10) });
+  deals.push({
+  id,
+  name: 'New deal',
+  owner: TEAM[0],
+  category: 'Marketplace',
+  stage: 'On track', update: '', next: '', date: new Date().toISOString().slice(0,10) });
   expanded = id;
   queueSave();
   renderDeals();
