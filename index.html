@@ -259,16 +259,7 @@
     border: 1px dashed var(--border-strong);
     border-radius: var(--radius-lg);
   }
-<button id="changeSheetBtn">Change Sheet</button>
-  document.getElementById('changeSheetBtn').addEventListener('click', () => {
-  localStorage.removeItem('team-priorities-script-url');
 
-  SCRIPT_URL = '';
-
-  document.getElementById('setupBanner').style.display = 'block';
-
-  document.getElementById('scriptUrlInput').value = '';
-});
   .setup-banner {
     background: var(--accent-bg);
     color: var(--accent);
@@ -298,7 +289,9 @@
       <p class="eyebrow">Internal · updated live</p>
       <h1>Team priorities</h1>
     </div>
-    <div class="sync-status" id="syncStatus"><span class="dot"></span><span id="syncLabel">Connecting...</span></div>
+    <div class="sync-status" id="syncStatus">
+      <button id="changeSheetBtn">Change Sheet</button>
+      <span class="dot"></span><span id="syncLabel">Connecting...</span></div>
   </header>
 
   <div id="setupBanner" class="setup-banner" style="display:none;">
@@ -694,7 +687,17 @@ document.getElementById('saveScriptUrlBtn').addEventListener('click', async () =
     document.getElementById('scriptUrlInput').focus();
   }
 });
+document.getElementById('changeSheetBtn').addEventListener('click', () => {
+    localStorage.removeItem('team-priorities-script-url');
 
+    SCRIPT_URL = '';
+
+    document.getElementById('setupBanner').style.display = 'block';
+
+    document.getElementById('scriptUrlInput').value = '';
+
+    setSyncStatus('error', 'Local only (no Sheet connected)');
+});
 loadData();
 </script>
 </body>
