@@ -259,7 +259,16 @@
     border: 1px dashed var(--border-strong);
     border-radius: var(--radius-lg);
   }
+<button id="changeSheetBtn">Change Sheet</button>
+  document.getElementById('changeSheetBtn').addEventListener('click', () => {
+  localStorage.removeItem('team-priorities-script-url');
 
+  SCRIPT_URL = '';
+
+  document.getElementById('setupBanner').style.display = 'block';
+
+  document.getElementById('scriptUrlInput').value = '';
+});
   .setup-banner {
     background: var(--accent-bg);
     color: var(--accent);
